@@ -1,0 +1,100 @@
+// =====================================================================
+//  PRISMA SCHEMA
+//  This file describes the database tables. Prisma reads it and:
+//    1. creates the real tables in PostgreSQL  (npx prisma migrate dev)
+//    2. generates a JavaScript client we use in code (prisma.led.findUnique ...)
+//
+//  Structure:   1 Device (ESP32 board)  ->  3 Leds  ->  many Commands / StatusLogs
+// =====================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// The only two states an LED can be in.
+enum LedState {
+  ON
+  OFF
+}
+
+// Life cycle of a command:
+// PENDING   -> created by the web page, waiting for the ESP32
+// DELIVERED -> the ESP32 has picked it up
+// EXECUTED  -> the ESP32 switched the pin and confirmed it
+enum CommandStatus {
+  PENDING
+  DELIVERED
+  EXECUTED
+}
+
+// ---------------------------------------------------------------------
+// Device: one row per physical ESP32 board.
+// ---------------------------------------------------------------------
+model Device {
+  id         String    @id              // e.g. "esp32-01" (same id is written in the ESP32 sketch)
+  name       String
+  lastSeenAt DateTime?                  // last time the ESP32 talked to the server
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  leds       Led[]                      // the LEDs connected to this board
+}
+
+// ---------------------------------------------------------------------
+// Led: one row per LED wired to the ESP32. Each LED has its own button.
+// ---------------------------------------------------------------------
+model Led {
+  id           Int       @id @default(autoincrement())
+  deviceId     String
+  name         String                   // "Red LED"
+  color        String                   // "red" -> used by the web page to colour the bulb
+  pin          Int                      // ESP32 GPIO number, e.g. 25
+  desiredState LedState  @default(OFF)  // what the USER wants (set by the web page)
+  actualState  LedState  @default(OFF)  // what the ESP32 REPORTS (the real state)
+  updatedAt    DateTime  @updatedAt
+
+  device       Device      @relation(fields: [deviceId], references: [id])
+  commands     Command[]
+  statusLogs   StatusLog[]
+
+  @@unique([deviceId, pin])             // two LEDs on the same board cannot share a pin
+}
+
+// ---------------------------------------------------------------------
+// Command: every button click from the web page.
+// ---------------------------------------------------------------------
+model Command {
+  id          Int           @id @default(autoincrement())
+  ledId       Int
+  action      LedState                          // ON or OFF
+  status      CommandStatus @default(PENDING)
+  createdAt   DateTime      @default(now())     // when the button was clicked
+  deliveredAt DateTime?                         // when the ESP32 fetched it
+  executedAt  DateTime?                         // when the ESP32 confirmed it
+
+  led         Led           @relation(fields: [ledId], references: [id])
+  statusLogs  StatusLog[]
+
+  @@index([ledId, status])
+}
+
+// ---------------------------------------------------------------------
+// StatusLog: every state report sent by the ESP32 for one LED.
+// ---------------------------------------------------------------------
+model StatusLog {
+  id         Int      @id @default(autoincrement())
+  ledId      Int
+  state      LedState                           // state the ESP32 reported
+  commandId  Int?                               // which command caused it (null = boot report)
+  reportedAt DateTime @default(now())
+
+  led        Led      @relation(fields: [ledId], references: [id])
+  command    Command? @relation(fields: [commandId], references: [id])
+
+  @@index([ledId, reportedAt])
+}

@@ -1,0 +1,331 @@
+/* =====================================================================
+   SMART HOME AUTOMATION — styles
+   Dark "night mode" look with glass cards and an animated background.
+   ===================================================================== */
+
+:root {
+  --bg: #0a0e1f;
+  --text: #eef1ff;
+  --muted: #9aa3c7;
+  --glass: rgba(255, 255, 255, 0.06);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --radius: 22px;
+  --mx: 50vw;   /* mouse position, set by Background.jsx */
+  --my: 30vh;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- Animated background ---------- */
+.bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background:
+    radial-gradient(1200px 600px at 10% -10%, #1b2250 0%, transparent 60%),
+    radial-gradient(900px 500px at 110% 110%, #2a1640 0%, transparent 60%),
+    var(--bg);
+}
+
+.blob {
+  position: absolute;
+  width: 46vmax;
+  height: 46vmax;
+  border-radius: 50%;
+  background: var(--c);
+  filter: blur(90px);
+  opacity: 0.07;                     /* LED off: very faint */
+  transition: opacity 1s ease;
+  animation: float 22s ease-in-out infinite alternate;
+}
+.blob.lit { opacity: 0.38; }         /* LED on: the room "lights up" */
+
+.blob-0 { top: -12vmax; left: -10vmax; }
+.blob-1 { top: 18vh;   right: -16vmax; animation-duration: 26s; animation-delay: -6s; }
+.blob-2 { bottom: -20vmax; left: 22vw; animation-duration: 30s; animation-delay: -12s; }
+
+@keyframes float {
+  0%   { transform: translate(0, 0) scale(1); }
+  50%  { transform: translate(6vmax, 4vmax) scale(1.12); }
+  100% { transform: translate(-4vmax, 7vmax) scale(0.95); }
+}
+
+/* soft light that follows the mouse */
+.spotlight {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(420px circle at var(--mx) var(--my), rgba(255, 255, 255, 0.08), transparent 60%);
+}
+
+/* fine dotted texture */
+.grain {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 22px 22px;
+  mask-image: linear-gradient(to bottom, black, transparent 85%);
+  -webkit-mask-image: linear-gradient(to bottom, black, transparent 85%);
+}
+
+/* ---------- Layout ---------- */
+.container { max-width: 1000px; margin: 0 auto; padding: 40px 16px 56px; }
+
+.header { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; }
+.logo {
+  display: grid; place-items: center;
+  width: 54px; height: 54px; flex-shrink: 0;
+  border-radius: 16px;
+  color: #fff;
+  background: linear-gradient(135deg, #7c5cff, #3ddcff);
+  box-shadow: 0 10px 30px rgba(124, 92, 255, 0.45);
+}
+h1 { margin: 0; font-size: clamp(1.6rem, 4vw, 2.3rem); font-weight: 700; letter-spacing: -0.02em; }
+.subtitle { margin: 2px 0 0; color: var(--muted); }
+.loading, .muted { color: var(--muted); }
+
+/* ---------- Glass card base ---------- */
+.glass, .led-card {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+}
+
+/* ---------- LED cards ---------- */
+.led-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+.led-card {
+  position: relative;
+  padding: 22px 22px 18px;
+  text-align: center;
+  overflow: hidden;
+  transition: transform 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
+}
+.led-card:hover { transform: translateY(-6px); }
+
+/* coloured glow inside the card when ON */
+.led-card::before {
+  content: "";
+  position: absolute;
+  inset: -40% -20% auto;
+  height: 80%;
+  background: radial-gradient(closest-side, var(--led), transparent);
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  pointer-events: none;
+}
+.led-card.is-on {
+  border-color: color-mix(in srgb, var(--led) 55%, transparent);
+  box-shadow: 0 20px 60px color-mix(in srgb, var(--led) 35%, transparent);
+}
+.led-card.is-on::before { opacity: 0.28; }
+
+.led-top { position: relative; display: flex; align-items: center; justify-content: space-between; }
+.led-card h2 { margin: 0; font-size: 1.1rem; font-weight: 600; }
+
+.chip {
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+.chip-on  { background: var(--led); color: #10131f; }
+.chip-off { background: rgba(255, 255, 255, 0.08); color: var(--muted); }
+
+/* Bulb icon ------------------------------------------------------------
+   off          -> grey glass
+   turning-on   -> flickers in the LED colour (waiting for the ESP32)
+   on           -> full colour + halo + light rays
+   turning-off  -> flickers while fading out
+   --------------------------------------------------------------------- */
+.bulb-wrap { position: relative; height: 170px; display: grid; place-items: center; margin: 4px 0 10px; }
+.bulb { width: 165px; height: 165px; overflow: visible; transition: transform 0.5s ease; }
+
+.bulb-glass {
+  fill: rgba(255, 255, 255, 0.07);
+  stroke: rgba(255, 255, 255, 0.28);
+  stroke-width: 2;
+  transition: fill 0.5s ease, stroke 0.5s ease, filter 0.5s ease;
+}
+.bulb-base { fill: rgba(255, 255, 255, 0.25); transition: fill 0.5s ease; }
+.bulb-filament {
+  fill: none; stroke: rgba(255, 255, 255, 0.35); stroke-width: 2;
+  stroke-linecap: round; stroke-linejoin: round;
+  transition: stroke 0.4s ease;
+}
+.bulb-shine { fill: none; stroke: rgba(255, 255, 255, 0); stroke-width: 2.5; stroke-linecap: round; transition: stroke 0.5s ease; }
+
+/* glow circle behind the bulb */
+.bulb-halo { fill: var(--led); opacity: 0; filter: blur(8px); transform-box: fill-box; transform-origin: center; transition: opacity 0.6s ease; }
+
+/* rays around the bulb */
+.bulb-rays line { stroke: var(--led); stroke-width: 3; stroke-linecap: round; }
+.bulb-rays { opacity: 0; transform-box: view-box; transform-origin: 32px 26px; transform: scale(0.8); transition: opacity 0.5s ease, transform 0.5s ease; }
+
+/* ---- ON (confirmed) ---- */
+.is-on .bulb { transform: scale(1.04); }
+.is-on .bulb-glass {
+  fill: var(--led); stroke: color-mix(in srgb, var(--led) 70%, #fff);
+  animation: glow 2.8s ease-in-out infinite;
+}
+.is-on .bulb-base { fill: rgba(255, 255, 255, 0.55); }
+.is-on .bulb-filament { stroke: #fff; filter: drop-shadow(0 0 3px #fff); }
+.is-on .bulb-shine { stroke: rgba(255, 255, 255, 0.75); }
+.is-on .bulb-halo { opacity: 0.22; animation: halo 2.8s ease-in-out infinite; }
+.is-on .bulb-rays { opacity: 1; transform: scale(1); animation: rays 2.8s ease-in-out infinite; }
+
+@keyframes glow {
+  0%, 100% { filter: drop-shadow(0 0 8px var(--led)) drop-shadow(0 0 20px var(--led)); }
+  50%      { filter: drop-shadow(0 0 14px var(--led)) drop-shadow(0 0 34px var(--led)); }
+}
+@keyframes halo {
+  0%, 100% { opacity: 0.18; transform: scale(1); }
+  50%      { opacity: 0.32; transform: scale(1.12); }
+}
+@keyframes rays {
+  0%, 100% { transform: scale(1);    opacity: 1; }
+  50%      { transform: scale(1.08); opacity: 0.7; }
+}
+
+/* ---- TURNING ON / OFF (clicked, waiting for the ESP32) ---- */
+.is-turning-on .bulb-glass,
+.is-turning-off .bulb-glass {
+  fill: var(--led); stroke: var(--led);
+  animation: flicker 1.4s linear infinite;
+}
+.is-turning-on .bulb-filament,
+.is-turning-off .bulb-filament { stroke: #fff; }
+.is-turning-on .bulb-rays { opacity: 0.35; transform: scale(0.9); }
+.is-turning-off .bulb-glass { animation-duration: 1s; }
+
+@keyframes flicker {
+  0%, 18%, 22%, 25%, 53%, 57%, 100% { fill-opacity: 0.9;  filter: drop-shadow(0 0 10px var(--led)); }
+  20%, 24%, 55%                     { fill-opacity: 0.15; filter: none; }
+}
+
+/* Toggle button */
+.toggle {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%;
+  padding: 14px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  font: inherit; font-weight: 600; font-size: 1rem;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.3s ease, filter 0.2s ease;
+}
+.toggle:hover:not(:disabled) { filter: brightness(1.12); transform: translateY(-1px); }
+.toggle:active:not(:disabled) { transform: scale(0.97); }
+.toggle:disabled { opacity: 0.55; cursor: progress; }
+.toggle:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+
+.toggle-on {                         /* button to switch the LED ON: uses the LED colour */
+  color: #10131f;
+  background: linear-gradient(135deg, var(--led), color-mix(in srgb, var(--led) 65%, #fff));
+  box-shadow: 0 10px 25px color-mix(in srgb, var(--led) 40%, transparent);
+}
+.toggle-off {                        /* button to switch the LED OFF: calm dark style */
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+/* "Wait for the system to confirm" */
+.hint {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  height: 22px; margin: 12px 0 0;
+  font-size: 0.85rem; color: #ffcf70;
+  opacity: 0; transform: translateY(-4px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.hint.show { opacity: 1; transform: none; }
+.spinner {
+  width: 14px; height: 14px;
+  border: 2px solid rgba(255, 207, 112, 0.3);
+  border-top-color: #ffcf70;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---------- Activity / history ---------- */
+.history { margin-top: 24px; padding: 22px; }
+.history h2 { margin: 0; font-size: 1.1rem; font-weight: 600; }
+.history-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.count { font-size: 0.85rem; }
+
+.history-actions { display: flex; justify-content: center; gap: 10px; margin-top: 16px; }
+.more-btn {
+  padding: 10px 22px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text);
+  font: inherit; font-weight: 600; font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+.more-btn:hover { background: rgba(255, 255, 255, 0.18); transform: translateY(-1px); }
+.more-btn:active { transform: scale(0.97); }
+.more-btn:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+.more-btn.ghost { background: transparent; color: var(--muted); }
+
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+th {
+  text-align: left; padding: 10px; white-space: nowrap;
+  color: var(--muted); font-weight: 500; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--glass-border);
+}
+td { padding: 10px; white-space: nowrap; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+tbody tr { transition: background 0.2s ease; }
+tbody tr:hover { background: rgba(255, 255, 255, 0.04); }
+
+.dot {
+  display: inline-block; width: 10px; height: 10px; margin-right: 8px;
+  border-radius: 50%; background: var(--led); box-shadow: 0 0 8px var(--led);
+}
+
+.badge { padding: 3px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; }
+.pending   { background: rgba(255, 207, 112, 0.15); color: #ffcf70; }
+.delivered { background: rgba(77, 171, 247, 0.15);  color: #74c0fc; }
+.executed  { background: rgba(61, 220, 132, 0.15);  color: #5ce69a; }
+
+/* ---------- Error ---------- */
+.error {
+  margin-bottom: 20px; padding: 14px 18px;
+  border-radius: 14px;
+  background: rgba(255, 90, 95, 0.12);
+  border: 1px solid rgba(255, 90, 95, 0.4);
+  color: #ffb3b5;
+}
+
+/* ---------- Small screens ---------- */
+@media (max-width: 520px) {
+  .container { padding-top: 28px; }
+  .logo { width: 46px; height: 46px; border-radius: 14px; }
+  .bulb-wrap { height: 130px; }
+}
+
+/* Respect users who prefer less motion */
+@media (prefers-reduced-motion: reduce) {
+  .blob, .spinner, .bulb * { animation: none !important; }
+  .led-card, .toggle { transition: none; }
+}
