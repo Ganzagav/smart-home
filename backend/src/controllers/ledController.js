@@ -2,7 +2,7 @@
 //  LED CONTROLLER  — used by the REACT WEB PAGE
 //  Each LED has its own button. A click sends:
 //      POST /api/leds/:ledId/commands   { "action": "ON" | "OFF" }
-// =====================================================================
+// =====================================================================//
 import prisma from "../prisma.js";
 
 const VALID_ACTIONS = ["ON", "OFF"];

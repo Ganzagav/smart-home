@@ -30,7 +30,7 @@ export async function getDevice(req, res) {
   if (!device) return res.status(404).json({ error: "Device not found" });
   res.json(withOnlineFlag(device));
 }
-
+//
 // GET /api/devices/:id/commands?limit=15  -> recent commands for ALL LEDs of this board
 export async function listCommands(req, res) {
   const limit = Math.min(Number(req.query.limit) || 15, 100);

@@ -2,7 +2,7 @@
 //  API LAYER — the ONLY file in React that talks to the backend.
 //  Components call these functions; they never use fetch() directly.
 // =====================================================================
-
+//
 // In development VITE_API_URL is empty, so "/api/..." goes through the Vite proxy.
 // In production (Vercel) it is the Render URL, e.g. https://smart-home-api.onrender.com
 const API_URL = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");

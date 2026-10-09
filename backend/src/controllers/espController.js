@@ -46,7 +46,7 @@ export async function getNextCommands(req, res) {
     commands: pending.map((c) => ({ id: c.id, pin: c.led.pin, action: c.action })),
   });
 }
-
+//
 // POST /api/esp/:deviceId/status    body: { "pin": 25, "state": "ON", "commandId": 12 }
 // The ESP32 reports the REAL state of one LED (after a command, or at boot).
 export async function reportStatus(req, res) {

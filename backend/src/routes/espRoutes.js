@@ -1,4 +1,5 @@
 // Routes called by the ESP32 board.
+//
 import { Router } from "express";
 import { getNextCommands, reportStatus } from "../controllers/espController.js";
 

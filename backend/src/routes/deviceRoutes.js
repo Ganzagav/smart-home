@@ -1,4 +1,5 @@
 // Routes called by the React web page — about the ESP32 BOARD.
+//
 import { Router } from "express";
 import { listDevices, getDevice, listCommands } from "../controllers/deviceController.js";
 

@@ -22,7 +22,7 @@
 #include <HTTPClient.h>
 #include <WiFiClientSecure.h>
 #include <ArduinoJson.h>
-
+//
 // ----------------------- CHANGE THESE --------------------------------
 const char* WIFI_SSID     = "...";
 const char* WIFI_PASSWORD = "wagwanfam";
