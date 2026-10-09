@@ -24,13 +24,13 @@
 #include <ArduinoJson.h>
 
 // ----------------------- CHANGE THESE --------------------------------
-const char* WIFI_SSID     = "YOUR_WIFI_NAME";
-const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
+const char* WIFI_SSID     = "...";
+const char* WIFI_PASSWORD = "wagwanfam";
 
 // Where the backend runs (no "/" at the end):
 //   Local test : your COMPUTER's IP on the same Wi-Fi, e.g. "http://192.168.1.10:5000"
 //   Live       : your Render URL, e.g. "https://smart-home-api.onrender.com"
-const char* SERVER_URL    = "http://192.168.1.10:5000";
+const char* SERVER_URL    = "http://10.116.102.254:5000";
 
 const char* DEVICE_ID     = "esp32-01";          // same id as in the database
 const char* DEVICE_KEY    = "esp32-secret-123";  // same as DEVICE_API_KEY in backend/.env
